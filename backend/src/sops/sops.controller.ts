@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { SopsService } from './sops.service';
 
 @Controller('sops')
@@ -8,6 +8,11 @@ export class SopsController {
   @Get()
   findAll() {
     return this.sopsService.findAll();
+  }
+
+  @Post()
+  create(@Body() body: { title: string; description: string }) {
+    return this.sopsService.create(body);
   }
 
   @Get(':id')

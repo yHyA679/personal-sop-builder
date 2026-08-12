@@ -35,6 +35,29 @@ export class SopsService {
     }));
   }
 
+  create(data: { title: string; description: string }) {
+    const id = Math.max(0, ...this.sops.map((sop) => sop.id)) + 1;
+    const timestamp = new Date().toISOString();
+    const sop = {
+      id,
+      title: data.title,
+      description: data.description,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      steps: [],
+    };
+
+    this.sops.push(sop);
+
+    return {
+      id: sop.id,
+      title: sop.title,
+      description: sop.description,
+      createdAt: sop.createdAt,
+      updatedAt: sop.updatedAt,
+    };
+  }
+
   findOne(id: number) {
     const sop = this.sops.find((item) => item.id === id);
 
