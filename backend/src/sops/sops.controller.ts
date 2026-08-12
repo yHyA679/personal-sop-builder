@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { SopsService } from './sops.service';
 
 @Controller('sops')
@@ -26,5 +36,11 @@ export class SopsController {
     @Body() body: { title?: string; description?: string },
   ) {
     return this.sopsService.update(Number(id), body);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string): void {
+    this.sopsService.remove(Number(id));
   }
 }

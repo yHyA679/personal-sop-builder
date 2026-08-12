@@ -68,6 +68,14 @@ export class SopsService {
     return sop;
   }
 
+  getNextStepId(): number {
+    const stepIds = this.sops.flatMap((sop) =>
+      sop.steps.map((step) => step.id),
+    );
+
+    return Math.max(0, ...stepIds) + 1;
+  }
+
   update(id: number, data: { title?: string; description?: string }) {
     const sop = this.sops.find((item) => item.id === id);
 
@@ -92,5 +100,15 @@ export class SopsService {
       createdAt: sop.createdAt,
       updatedAt: sop.updatedAt,
     };
+  }
+
+  remove(id: number): void {
+    const sopIndex = this.sops.findIndex((sop) => sop.id === id);
+
+    if (sopIndex === -1) {
+      throw new NotFoundException(`SOP with ID ${id} not found`);
+    }
+
+    this.sops.splice(sopIndex, 1);
   }
 }

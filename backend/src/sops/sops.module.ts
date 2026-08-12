@@ -5,5 +5,6 @@ import { SopsService } from './sops.service';
 @Module({
   controllers: [SopsController],
   providers: [SopsService],
+  exports: [SopsService],
 })
 export class SopsModule {}
