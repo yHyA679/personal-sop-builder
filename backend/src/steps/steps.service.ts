@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { SopsService } from '../sops/sops.service';
 
 @Injectable()
@@ -16,6 +16,18 @@ export class StepsService {
     };
 
     sop.steps.push(step);
+
+    return step;
+  }
+
+  update(stepId: number, data: { content: string }) {
+    const step = this.sopsService.findStep(stepId);
+
+    if (!step) {
+      throw new NotFoundException(`Step with ID ${stepId} not found`);
+    }
+
+    step.content = data.content;
 
     return step;
   }

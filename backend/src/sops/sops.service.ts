@@ -76,6 +76,12 @@ export class SopsService {
     return Math.max(0, ...stepIds) + 1;
   }
 
+  findStep(stepId: number) {
+    return this.sops
+      .flatMap((sop) => sop.steps)
+      .find((step) => step.id === stepId);
+  }
+
   update(id: number, data: { title?: string; description?: string }) {
     const sop = this.sops.find((item) => item.id === id);
 
