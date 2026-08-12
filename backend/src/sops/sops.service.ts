@@ -67,4 +67,30 @@ export class SopsService {
 
     return sop;
   }
+
+  update(id: number, data: { title?: string; description?: string }) {
+    const sop = this.sops.find((item) => item.id === id);
+
+    if (!sop) {
+      throw new NotFoundException(`SOP with ID ${id} not found`);
+    }
+
+    if (data.title !== undefined) {
+      sop.title = data.title;
+    }
+
+    if (data.description !== undefined) {
+      sop.description = data.description;
+    }
+
+    sop.updatedAt = new Date().toISOString();
+
+    return {
+      id: sop.id,
+      title: sop.title,
+      description: sop.description,
+      createdAt: sop.createdAt,
+      updatedAt: sop.updatedAt,
+    };
+  }
 }
