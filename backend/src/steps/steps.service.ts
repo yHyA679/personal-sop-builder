@@ -31,4 +31,18 @@ export class StepsService {
 
     return step;
   }
+
+  remove(stepId: number): void {
+    const result = this.sopsService.findStepWithParent(stepId);
+
+    if (!result) {
+      throw new NotFoundException(`Step with ID ${stepId} not found`);
+    }
+
+    const { sop, stepIndex } = result;
+    sop.steps.splice(stepIndex, 1);
+    sop.steps.forEach((step, index) => {
+      step.order = index + 1;
+    });
+  }
 }

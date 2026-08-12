@@ -77,9 +77,23 @@ export class SopsService {
   }
 
   findStep(stepId: number) {
-    return this.sops
-      .flatMap((sop) => sop.steps)
-      .find((step) => step.id === stepId);
+    return this.findStepWithParent(stepId)?.step;
+  }
+
+  findStepWithParent(stepId: number) {
+    for (const sop of this.sops) {
+      const stepIndex = sop.steps.findIndex((step) => step.id === stepId);
+
+      if (stepIndex !== -1) {
+        return {
+          sop,
+          step: sop.steps[stepIndex],
+          stepIndex,
+        };
+      }
+    }
+
+    return undefined;
   }
 
   update(id: number, data: { title?: string; description?: string }) {
