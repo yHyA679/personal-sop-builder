@@ -24,6 +24,14 @@ export class StepsController {
     return this.stepsService.update(Number(id), body);
   }
 
+  @Patch('sops/:sopId/steps/reorder')
+  reorder(
+    @Param('sopId') sopId: string,
+    @Body() body: { stepIds: number[] },
+  ) {
+    return this.stepsService.reorder(Number(sopId), body.stepIds);
+  }
+
   @Delete('steps/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string): void {
