@@ -1,65 +1,68 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { TEMPORARY_DEVELOPMENT_USER } from './temporary-development-user';
+
+const sopResponseSelect = {
+  id: true,
+  title: true,
+  description: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
 
 @Injectable()
 export class SopsService {
-  private readonly sops = [
-    {
-      id: 10,
-      title: 'Deploy Website',
-      description: 'Steps I use to deploy my website',
-      createdAt: '2026-08-11T20:00:00Z',
-      updatedAt: '2026-08-11T20:00:00Z',
-      steps: [
-        {
-          id: 100,
-          content: 'Run tests',
-          order: 1,
-        },
-        {
-          id: 101,
-          content: 'Build project',
-          order: 2,
-        },
-      ],
-    },
-  ];
+  constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.sops.map((sop) => ({
+  async findAll() {
+    const sops = await this.prisma.sop.findMany({
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        ...sopResponseSelect,
+        _count: {
+          select: { steps: true },
+        },
+      },
+    });
+
+    return sops.map((sop) => ({
       id: sop.id,
       title: sop.title,
       description: sop.description,
-      stepsCount: sop.steps.length,
+      stepsCount: sop._count.steps,
       createdAt: sop.createdAt,
       updatedAt: sop.updatedAt,
     }));
   }
 
-  create(data: { title: string; description: string }) {
-    const id = Math.max(0, ...this.sops.map((sop) => sop.id)) + 1;
-    const timestamp = new Date().toISOString();
-    const sop = {
-      id,
-      title: data.title,
-      description: data.description,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      steps: [],
-    };
+  async create(data: { title: string; description: string }) {
+    const userId = await this.getTemporaryDevelopmentUserId();
 
-    this.sops.push(sop);
-
-    return {
-      id: sop.id,
-      title: sop.title,
-      description: sop.description,
-      createdAt: sop.createdAt,
-      updatedAt: sop.updatedAt,
-    };
+    return this.prisma.sop.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        userId,
+      },
+      select: sopResponseSelect,
+    });
   }
 
-  findOne(id: number) {
-    const sop = this.sops.find((item) => item.id === id);
+  async findOne(id: number) {
+    const sop = await this.prisma.sop.findUnique({
+      where: { id },
+      select: {
+        ...sopResponseSelect,
+        steps: {
+          orderBy: { order: 'asc' },
+          select: {
+            id: true,
+            content: true,
+            order: true,
+          },
+        },
+      },
+    });
 
     if (!sop) {
       throw new NotFoundException(`SOP with ID ${id} not found`);
@@ -68,67 +71,46 @@ export class SopsService {
     return sop;
   }
 
-  getNextStepId(): number {
-    const stepIds = this.sops.flatMap((sop) =>
-      sop.steps.map((step) => step.id),
-    );
+  async update(id: number, data: { title?: string; description?: string }) {
+    const existingSop = await this.prisma.sop.findUnique({
+      where: { id },
+      select: { id: true },
+    });
 
-    return Math.max(0, ...stepIds) + 1;
-  }
-
-  findStep(stepId: number) {
-    return this.findStepWithParent(stepId)?.step;
-  }
-
-  findStepWithParent(stepId: number) {
-    for (const sop of this.sops) {
-      const stepIndex = sop.steps.findIndex((step) => step.id === stepId);
-
-      if (stepIndex !== -1) {
-        return {
-          sop,
-          step: sop.steps[stepIndex],
-          stepIndex,
-        };
-      }
-    }
-
-    return undefined;
-  }
-
-  update(id: number, data: { title?: string; description?: string }) {
-    const sop = this.sops.find((item) => item.id === id);
-
-    if (!sop) {
+    if (!existingSop) {
       throw new NotFoundException(`SOP with ID ${id} not found`);
     }
 
-    if (data.title !== undefined) {
-      sop.title = data.title;
-    }
-
-    if (data.description !== undefined) {
-      sop.description = data.description;
-    }
-
-    sop.updatedAt = new Date().toISOString();
-
-    return {
-      id: sop.id,
-      title: sop.title,
-      description: sop.description,
-      createdAt: sop.createdAt,
-      updatedAt: sop.updatedAt,
-    };
+    return this.prisma.sop.update({
+      where: { id },
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
+      },
+      select: sopResponseSelect,
+    });
   }
 
-  remove(id: number): void {
-    const sopIndex = this.sops.findIndex((sop) => sop.id === id);
+  async remove(id: number): Promise<void> {
+    const result = await this.prisma.sop.deleteMany({
+      where: { id },
+    });
 
-    if (sopIndex === -1) {
+    if (result.count === 0) {
       throw new NotFoundException(`SOP with ID ${id} not found`);
     }
+  }
 
-    this.sops.splice(sopIndex, 1);
+  private async getTemporaryDevelopmentUserId(): Promise<number> {
+    const user = await this.prisma.user.upsert({
+      where: { email: TEMPORARY_DEVELOPMENT_USER.email },
+      update: {},
+      create: TEMPORARY_DEVELOPMENT_USER,
+      select: { id: true },
+    });
+
+    return user.id;
   }
 }

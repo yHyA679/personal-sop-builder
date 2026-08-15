@@ -25,16 +25,13 @@ export class StepsController {
   }
 
   @Patch('sops/:sopId/steps/reorder')
-  reorder(
-    @Param('sopId') sopId: string,
-    @Body() body: { stepIds: number[] },
-  ) {
+  reorder(@Param('sopId') sopId: string, @Body() body: { stepIds: number[] }) {
     return this.stepsService.reorder(Number(sopId), body.stepIds);
   }
 
   @Delete('steps/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string): void {
-    this.stepsService.remove(Number(id));
+  remove(@Param('id') id: string): Promise<void> {
+    return this.stepsService.remove(Number(id));
   }
 }

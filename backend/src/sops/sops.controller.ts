@@ -40,7 +40,7 @@ export class SopsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string): void {
-    this.sopsService.remove(Number(id));
+  remove(@Param('id') id: string): Promise<void> {
+    return this.sopsService.remove(Number(id));
   }
 }

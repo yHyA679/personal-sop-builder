@@ -3,42 +3,63 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SopsService } from '../sops/sops.service';
+import { PrismaService } from '../prisma/prisma.service';
+
+const stepResponseSelect = {
+  id: true,
+  content: true,
+  order: true,
+} as const;
 
 @Injectable()
 export class StepsService {
-  constructor(private readonly sopsService: SopsService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  create(sopId: number, data: { content: string }) {
-    const sop = this.sopsService.findOne(sopId);
-    const id = this.sopsService.getNextStepId();
-    const order = Math.max(0, ...sop.steps.map((step) => step.order)) + 1;
-    const step = {
-      id,
-      content: data.content,
-      order,
-    };
+  async create(sopId: number, data: { content: string }) {
+    return this.prisma.$transaction(async (transaction) => {
+      const sop = await transaction.sop.findUnique({
+        where: { id: sopId },
+        select: { id: true },
+      });
 
-    sop.steps.push(step);
+      if (!sop) {
+        throw new NotFoundException(`SOP with ID ${sopId} not found`);
+      }
 
-    return step;
+      const orderAggregation = await transaction.step.aggregate({
+        where: { sopId },
+        _max: { order: true },
+      });
+
+      return transaction.step.create({
+        data: {
+          content: data.content,
+          order: (orderAggregation._max.order ?? 0) + 1,
+          sopId,
+        },
+        select: stepResponseSelect,
+      });
+    });
   }
 
-  update(stepId: number, data: { content: string }) {
-    const step = this.sopsService.findStep(stepId);
+  async update(stepId: number, data: { content: string }) {
+    const step = await this.prisma.step.findUnique({
+      where: { id: stepId },
+      select: { id: true },
+    });
 
     if (!step) {
       throw new NotFoundException(`Step with ID ${stepId} not found`);
     }
 
-    step.content = data.content;
-
-    return step;
+    return this.prisma.step.update({
+      where: { id: stepId },
+      data: { content: data.content },
+      select: stepResponseSelect,
+    });
   }
 
-  reorder(sopId: number, stepIds: number[]) {
-    const sop = this.sopsService.findOne(sopId);
-
+  async reorder(sopId: number, stepIds: number[]) {
     if (!Array.isArray(stepIds)) {
       throw new BadRequestException('stepIds must be an array');
     }
@@ -47,42 +68,82 @@ export class StepsService {
       throw new BadRequestException('Step IDs must not be duplicated');
     }
 
-    if (stepIds.length !== sop.steps.length) {
-      throw new BadRequestException(
-        'stepIds must include every Step in the SOP exactly once',
-      );
-    }
+    return this.prisma.$transaction(async (transaction) => {
+      const sop = await transaction.sop.findUnique({
+        where: { id: sopId },
+        select: { id: true },
+      });
 
-    const stepsById = new Map(sop.steps.map((step) => [step.id, step]));
+      if (!sop) {
+        throw new NotFoundException(`SOP with ID ${sopId} not found`);
+      }
 
-    for (const stepId of stepIds) {
-      if (!stepsById.has(stepId)) {
+      const currentSteps = await transaction.step.findMany({
+        where: { sopId },
+        select: { id: true },
+      });
+
+      if (stepIds.length !== currentSteps.length) {
         throw new BadRequestException(
-          `Step with ID ${stepId} does not belong to SOP ${sopId}`,
+          'stepIds must include every Step in the SOP exactly once',
         );
       }
-    }
 
-    sop.steps = stepIds.map((stepId, index) => {
-      const step = stepsById.get(stepId)!;
-      step.order = index + 1;
-      return step;
+      const currentStepIds = new Set(currentSteps.map((step) => step.id));
+
+      for (const stepId of stepIds) {
+        if (!currentStepIds.has(stepId)) {
+          throw new BadRequestException(
+            `Step with ID ${stepId} does not belong to SOP ${sopId}`,
+          );
+        }
+      }
+
+      for (const [index, stepId] of stepIds.entries()) {
+        await transaction.step.update({
+          where: { id: stepId },
+          data: { order: index + 1 },
+        });
+      }
+
+      return transaction.step.findMany({
+        where: { sopId },
+        orderBy: { order: 'asc' },
+        select: stepResponseSelect,
+      });
     });
-
-    return sop.steps;
   }
 
-  remove(stepId: number): void {
-    const result = this.sopsService.findStepWithParent(stepId);
+  async remove(stepId: number): Promise<void> {
+    await this.prisma.$transaction(async (transaction) => {
+      const step = await transaction.step.findUnique({
+        where: { id: stepId },
+        select: {
+          id: true,
+          sopId: true,
+        },
+      });
 
-    if (!result) {
-      throw new NotFoundException(`Step with ID ${stepId} not found`);
-    }
+      if (!step) {
+        throw new NotFoundException(`Step with ID ${stepId} not found`);
+      }
 
-    const { sop, stepIndex } = result;
-    sop.steps.splice(stepIndex, 1);
-    sop.steps.forEach((step, index) => {
-      step.order = index + 1;
+      await transaction.step.delete({
+        where: { id: stepId },
+      });
+
+      const remainingSteps = await transaction.step.findMany({
+        where: { sopId: step.sopId },
+        orderBy: [{ order: 'asc' }, { id: 'asc' }],
+        select: { id: true },
+      });
+
+      for (const [index, remainingStep] of remainingSteps.entries()) {
+        await transaction.step.update({
+          where: { id: remainingStep.id },
+          data: { order: index + 1 },
+        });
+      }
     });
   }
 }
