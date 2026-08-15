@@ -35,7 +35,7 @@ export class SopsService {
     }));
   }
 
-  async create(data: { title: string; description: string }) {
+  async create(data: { title: string; description?: string }) {
     const userId = await this.getTemporaryDevelopmentUserId();
 
     return this.prisma.sop.create({
