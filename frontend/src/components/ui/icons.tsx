@@ -1,0 +1,24 @@
+import type { SVGProps } from "react";
+
+type IconProps = SVGProps<SVGSVGElement> & { size?: number };
+const base = (size: number) => ({ width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true });
+export const PlusIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="M12 5v14M5 12h14" /></svg>;
+export const SearchIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.7-3.7" /></svg>;
+export const XIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="m6 6 12 12M18 6 6 18" /></svg>;
+export const ArrowLeftIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="m15 18-6-6 6-6" /></svg>;
+export const ArrowRightIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="m9 18 6-6-6-6" /></svg>;
+export const MoreIcon = ({ size = 19, ...props }: IconProps) => <svg {...base(size)} {...props}><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"/></svg>;
+export const TrashIcon = ({ size = 17, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" /></svg>;
+export const EditIcon = ({ size = 17, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="M4 20h4l11-11-4-4L4 16v4Z" /><path d="m13.5 6.5 4 4" /></svg>;
+export const EyeIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></svg>;
+export const EyeOffIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="m3 3 18 18M10.6 6.2A10 10 0 0 1 12 6c6 0 9.5 6 9.5 6a14 14 0 0 1-2 2.6M6.4 6.5A14.3 14.3 0 0 0 2.5 12s3.5 6 9.5 6a9.7 9.7 0 0 0 3-.5M9.8 9.8a3 3 0 0 0 4.4 4.4" /></svg>;
+export const GripIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><circle cx="9" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="17" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="17" r="1" fill="currentColor" stroke="none"/></svg>;
+export const ChevronDownIcon = ({ size = 16, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="m7 10 5 5 5-5" /></svg>;
+export const ChevronUpIcon = ({ size = 16, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="m7 14 5-5 5 5" /></svg>;
+export const CheckIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="m5 12 4 4L19 6" /></svg>;
+export const AlertIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16.5h.01" /></svg>;
+export const LogoutIcon = ({ size = 17, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="M10 5H5v14h5M14 8l4 4-4 4M9 12h9" /></svg>;
+export const DocumentIcon = ({ size = 20, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="M6 3h8l4 4v14H6V3Z" /><path d="M14 3v5h4M9 12h6M9 16h6" /></svg>;
+export const SunIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><circle cx="12" cy="12" r="3.5" /><path d="M12 2.5v2M12 19.5v2M4.5 4.5l1.4 1.4M18.1 18.1l1.4 1.4M2.5 12h2M19.5 12h2M4.5 19.5l1.4-1.4M18.1 5.9l1.4-1.4" /></svg>;
+export const MoonIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><path d="M20 15.2A8 8 0 0 1 8.8 4a8 8 0 1 0 11.2 11.2Z" /></svg>;
+export const SystemIcon = ({ size = 18, ...props }: IconProps) => <svg {...base(size)} {...props}><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></svg>;

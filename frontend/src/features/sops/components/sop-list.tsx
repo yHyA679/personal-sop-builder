@@ -1,0 +1,28 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { Button, ButtonLink } from "@/src/components/ui/button";
+import { ArrowRightIcon, DocumentIcon, EditIcon, MoreIcon, PlusIcon, TrashIcon } from "@/src/components/ui/icons";
+import type { SopSummary } from "@/src/lib/types";
+import { formatRelativeDate } from "@/src/lib/utils";
+import { DeleteSopDialog } from "./delete-sop-dialog";
+
+export function SopList({ sops }: { sops: SopSummary[] }) {
+  return <div className="overflow-visible rounded-[14px] border border-border bg-surface"><div className="hidden grid-cols-[minmax(0,1fr)_110px_150px_48px] gap-5 border-b border-border px-5 py-3 text-[11px] font-semibold uppercase tracking-[.1em] text-muted-foreground md:grid"><span>Procedure</span><span>Steps</span><span>Activity</span><span /></div><ul className="divide-y divide-border">{sops.map((sop) => <SopListItem key={sop.id} sop={sop} />)}</ul></div>;
+}
+
+function SopListItem({ sop }: { sop: SopSummary }) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  return <li className="group relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 transition-colors hover:bg-surface-hover sm:gap-4 sm:px-5 md:grid-cols-[minmax(0,1fr)_110px_150px_48px] md:gap-5">
+    <Link href={`/sops/${sop.id}`} className="min-w-0 rounded-md"><div className="flex items-start gap-3.5"><span className="mt-0.5 hidden size-9 shrink-0 place-items-center rounded-[9px] border border-border bg-surface-subtle text-muted-foreground sm:grid"><DocumentIcon size={18} /></span><span className="min-w-0"><span className="block truncate text-[15px] font-semibold tracking-[-.015em] group-hover:text-accent">{sop.title}</span><span className="mt-1 block line-clamp-2 text-sm leading-5 text-muted-foreground md:line-clamp-1">{sop.description || "No description"}</span><span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground md:hidden"><span>{sop.stepsCount} {sop.stepsCount === 1 ? "step" : "steps"}</span><span aria-hidden>·</span><span>{formatRelativeDate(sop.updatedAt)}</span></span></span></div></Link>
+    <span className="hidden text-sm tabular-nums text-muted-foreground md:block">{sop.stepsCount} {sop.stepsCount === 1 ? "step" : "steps"}</span><span className="hidden text-sm text-muted-foreground md:block">{formatRelativeDate(sop.updatedAt)}</span>
+    <details className="relative justify-self-end"><summary className="grid size-9 cursor-pointer list-none place-items-center rounded-lg text-muted-foreground hover:bg-surface-subtle hover:text-foreground [&::-webkit-details-marker]:hidden" aria-label={`Actions for ${sop.title}`}><MoreIcon /></summary><div className="absolute right-0 z-20 mt-1 w-36 rounded-[10px] border border-border bg-surface-raised p-1 shadow-[0_12px_30px_var(--shadow-color)]"><Link href={`/sops/${sop.id}/edit`} className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:bg-surface-subtle"><EditIcon />Edit</Link><button onClick={() => setDeleteOpen(true)} className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-destructive hover:bg-destructive-soft"><TrashIcon />Delete</button></div></details>
+    <DeleteSopDialog sopId={sop.id} sopTitle={sop.title} open={deleteOpen} onClose={() => setDeleteOpen(false)} />
+  </li>;
+}
+
+export function EmptySopState() { return <div className="rounded-[14px] border border-dashed border-border-strong bg-surface px-6 py-16 text-center sm:py-20"><span className="mx-auto grid size-12 place-items-center rounded-xl border border-border bg-surface-subtle text-muted-foreground"><DocumentIcon /></span><h2 className="mt-5 text-lg font-semibold tracking-[-.02em]">Your first repeatable process starts here</h2><p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">Capture the steps once, then follow them with confidence whenever the work comes around again.</p><ButtonLink href="/sops/new" className="mt-6"><PlusIcon />Create your first process</ButtonLink></div>; }
+export function NoResults({ search, onClear }: { search: string; onClear: () => void }) { return <div className="rounded-[14px] border border-border bg-surface px-6 py-14 text-center"><h2 className="text-lg font-semibold tracking-[-.02em]">No processes match “{search}”</h2><p className="mt-2 text-sm text-muted-foreground">Try a different phrase or clear the search to see your full library.</p><Button variant="secondary" className="mt-6" onClick={onClear}>Clear search</Button></div>; }
+export function SopListSkeleton() { return <div className="overflow-hidden rounded-[14px] border border-border bg-surface" aria-label="Loading processes"><div className="h-11 border-b border-border bg-surface-subtle/50" />{[1,2,3,4].map((item) => <div key={item} className="flex items-center gap-4 border-b border-border px-5 py-5 last:border-0"><div className="size-9 animate-pulse rounded-lg bg-surface-subtle" /><div className="flex-1"><div className="h-4 w-48 animate-pulse rounded bg-surface-subtle" /><div className="mt-2 h-3 w-3/5 animate-pulse rounded bg-surface-subtle" /></div><div className="hidden h-3 w-20 animate-pulse rounded bg-surface-subtle md:block" /></div>)}</div>; }
+export function LoadError({ onRetry }: { onRetry: () => void }) { return <div className="flex flex-col items-start justify-between gap-5 rounded-[14px] border border-destructive-border bg-surface px-5 py-5 sm:flex-row sm:items-center"><div><h2 className="text-sm font-semibold">We couldn’t load your processes</h2><p className="mt-1 text-sm text-muted-foreground">Your work is safe. Check your connection and try again.</p></div><Button variant="secondary" onClick={onRetry}>Try again <ArrowRightIcon /></Button></div>; }
