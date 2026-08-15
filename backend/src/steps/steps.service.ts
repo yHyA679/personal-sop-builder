@@ -15,10 +15,10 @@ const stepResponseSelect = {
 export class StepsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(sopId: number, data: { content: string }) {
+  async create(sopId: number, userId: number, data: { content: string }) {
     return this.prisma.$transaction(async (transaction) => {
-      const sop = await transaction.sop.findUnique({
-        where: { id: sopId },
+      const sop = await transaction.sop.findFirst({
+        where: { id: sopId, userId },
         select: { id: true },
       });
 
@@ -42,9 +42,12 @@ export class StepsService {
     });
   }
 
-  async update(stepId: number, data: { content: string }) {
-    const step = await this.prisma.step.findUnique({
-      where: { id: stepId },
+  async update(stepId: number, userId: number, data: { content: string }) {
+    const step = await this.prisma.step.findFirst({
+      where: {
+        id: stepId,
+        sop: { userId },
+      },
       select: { id: true },
     });
 
@@ -59,7 +62,7 @@ export class StepsService {
     });
   }
 
-  async reorder(sopId: number, stepIds: number[]) {
+  async reorder(sopId: number, userId: number, stepIds: number[]) {
     if (!Array.isArray(stepIds)) {
       throw new BadRequestException('stepIds must be an array');
     }
@@ -69,8 +72,8 @@ export class StepsService {
     }
 
     return this.prisma.$transaction(async (transaction) => {
-      const sop = await transaction.sop.findUnique({
-        where: { id: sopId },
+      const sop = await transaction.sop.findFirst({
+        where: { id: sopId, userId },
         select: { id: true },
       });
 
@@ -114,10 +117,13 @@ export class StepsService {
     });
   }
 
-  async remove(stepId: number): Promise<void> {
+  async remove(stepId: number, userId: number): Promise<void> {
     await this.prisma.$transaction(async (transaction) => {
-      const step = await transaction.step.findUnique({
-        where: { id: stepId },
+      const step = await transaction.step.findFirst({
+        where: {
+          id: stepId,
+          sop: { userId },
+        },
         select: {
           id: true,
           sopId: true,

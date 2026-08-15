@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { TEMPORARY_DEVELOPMENT_USER } from './temporary-development-user';
 
 const sopResponseSelect = {
   id: true,
@@ -14,8 +13,29 @@ const sopResponseSelect = {
 export class SopsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(userId: number, search?: string) {
+    const normalizedSearch = typeof search === 'string' ? search.trim() : '';
+
     const sops = await this.prisma.sop.findMany({
+      where: {
+        userId,
+        ...(normalizedSearch && {
+          OR: [
+            {
+              title: {
+                contains: normalizedSearch,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              description: {
+                contains: normalizedSearch,
+                mode: 'insensitive' as const,
+              },
+            },
+          ],
+        }),
+      },
       orderBy: { updatedAt: 'desc' },
       select: {
         ...sopResponseSelect,
@@ -35,9 +55,7 @@ export class SopsService {
     }));
   }
 
-  async create(data: { title: string; description?: string }) {
-    const userId = await this.getTemporaryDevelopmentUserId();
-
+  async create(userId: number, data: { title: string; description?: string }) {
     return this.prisma.sop.create({
       data: {
         title: data.title,
@@ -48,9 +66,9 @@ export class SopsService {
     });
   }
 
-  async findOne(id: number) {
-    const sop = await this.prisma.sop.findUnique({
-      where: { id },
+  async findOne(id: number, userId: number) {
+    const sop = await this.prisma.sop.findFirst({
+      where: { id, userId },
       select: {
         ...sopResponseSelect,
         steps: {
@@ -71,9 +89,13 @@ export class SopsService {
     return sop;
   }
 
-  async update(id: number, data: { title?: string; description?: string }) {
-    const existingSop = await this.prisma.sop.findUnique({
-      where: { id },
+  async update(
+    id: number,
+    userId: number,
+    data: { title?: string; description?: string },
+  ) {
+    const existingSop = await this.prisma.sop.findFirst({
+      where: { id, userId },
       select: { id: true },
     });
 
@@ -93,24 +115,13 @@ export class SopsService {
     });
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, userId: number): Promise<void> {
     const result = await this.prisma.sop.deleteMany({
-      where: { id },
+      where: { id, userId },
     });
 
     if (result.count === 0) {
       throw new NotFoundException(`SOP with ID ${id} not found`);
     }
-  }
-
-  private async getTemporaryDevelopmentUserId(): Promise<number> {
-    const user = await this.prisma.user.upsert({
-      where: { email: TEMPORARY_DEVELOPMENT_USER.email },
-      update: {},
-      create: TEMPORARY_DEVELOPMENT_USER,
-      select: { id: true },
-    });
-
-    return user.id;
   }
 }
