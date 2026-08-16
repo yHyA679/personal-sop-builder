@@ -2,7 +2,6 @@ import { clearAuth, getAccessToken, getRefreshToken, storeAccessToken } from "./
 import type { Sop, SopDraft, SopSummary, Step, User } from "./types";
 
 const configuredApiUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api").replace(/\/$/, "");
-const apiBaseUrl = () => typeof window === "undefined" ? configuredApiUrl : "/backend-api";
 let refreshRequest: Promise<string> | null = null;
 
 export class ApiError extends Error {
@@ -43,7 +42,7 @@ async function refreshAccessToken() {
   refreshRequest = (async () => {
     let response: Response;
     try {
-      response = await fetch(`${apiBaseUrl()}/auth/refresh`, {
+      response = await fetch(`${configuredApiUrl}/auth/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refreshToken }),
@@ -70,7 +69,7 @@ async function request<T>(path: string, options: RequestInit = {}, authenticated
   }
   let response: Response;
   try {
-    response = await fetch(`${apiBaseUrl()}${path}`, { ...options, headers });
+    response = await fetch(`${configuredApiUrl}${path}`, { ...options, headers });
   } catch {
     throw new ApiError("Could not connect to the server. Check that the API is running.", 0);
   }

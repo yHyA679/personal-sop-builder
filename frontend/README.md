@@ -5,7 +5,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 First, run the development server:
 
 ```bash
-npm run dev
+npm run dev -- -p 3001
 # or
 yarn dev
 # or
@@ -14,7 +14,7 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3001) with your browser to see the result. API requests use `NEXT_PUBLIC_API_URL` from `.env.local`.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
